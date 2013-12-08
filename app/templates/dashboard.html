@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <title>Dashboard</title>
+    </head>
+    <body>
+        <h1>Dashboard</h1>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% for sprinkler in sprinklers %}
+        <h2>Sprinkler # {{ sprinkler.name }}</h2>
+        <ul>
+            <li>
+            Status: {{ sprinkler.status }}
+            {% if sprinkler.status == "ON" %}
+            <a href="{{ url_for('do_request', request="OFF", head=sprinkler.name) }}">TURN OFF</a>
+            {% else %}
+            <a href="{{ url_for('do_request', request="ON", head=sprinkler.name) }}">TURN ON</a>
+            {% endif %}
+            </li>
+            <li>Moisture: {{ sprinkler.moisture }}</li>
+            <li>Flow: {{ sprinkler.flow }}</li>
+        </ul>
+        {% endfor %}
+    </body>
+</html>
