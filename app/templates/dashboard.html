@@ -18,6 +18,22 @@
                 {% endfor %}
             {% endif %}
             {% endwith %}
+            <h3>Current Weather Information {% if weather %}: <font color="red">{{weather.zipcode}} {% endif %}</font></h3>
+            
+            <form class="form" action="{{ url_for('show_dashboard') }}" method="post">
+                <input id="location" type="text" name="location" placeholder="Enter Zip" class="input-xlarge" style="height: 25px">
+                <input type="submit" value="Submit" class="btn btn-mini btn-info">
+            </form> 
+
+            {% if weather %}
+            <ul>
+                <li><b>Currently:</b> {{weather.weather}}</li>
+                <li><b>Temperature (F): </b>{{weather.temp}}</li>
+                <li><b>Humidity: </b>{{weather.humidity}}</li>
+                <li><b>Precipitation (in.): </b>{{weather.precipitation}}</li>
+            </ul>
+            {% endif %}
+
             {% for sprinkler in sprinklers %}
             {% if sprinkler.status == "ON" %}
             <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-success">ON</span></p>
