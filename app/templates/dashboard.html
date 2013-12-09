@@ -1,18 +1,38 @@
 <html>
     <head>
-        <title>Your Sprinkler Dashboard</title>
+        <title>Sprinkler Dashboard</title>
+        <script src="https://code.jquery.com/jquery.js"></script>
         <link href="/static/css/flatstrap.css" rel="stylesheet" media="screen">
         <link href="/static/css/sticky-footer.css" rel="stylesheet">
         <script src="/static/js/bootstrap.js"></script>
-        <script src="https://code.jquery.com/jquery.js"></script>
     </head>
     <body>
         <div class="container">
-            <h1>Your Sprinkler Dashboard</h1>
+            <div class="page-header">
+                <h1>Sprinkler Dashboard</h1>
+                <small><strong>Last Updated:</strong> {{ updated_at }}  </small><a href="{{ url_for('show_dashboard') }}">Update</a>
+
+                <div id="addSprinklerModal" class="modal hide fade" tabeindex="-1" role="dialog" aria-labelledby="addSprinklerModal" aria-hidden="true">
+                    <div class="modal-header">
+                        <h3>Add new sprinkler</h3>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-inline" action="{{ url_for('add_sprinkler') }}" method="post">
+                            <input id="name" type="text" name="name" placeholder="Sprinkler Name" class="input-large" style="height: 30px">
+                            <input id="status" type="text" name="status" placeholder="ON/OFF" class="input-large" style="height: 30px">
+                    </div>
+                    <div class="modal-footer">
+                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                            <input type="submit" value="Submit" class="btn btn-info">
+                        </form> 
+                    </div>
+                </div>
+            </div>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                <div class="alert">
+                <div class="alert alert-dismissable">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                     <strong>{{ message }}</strong>
                 </div>
                 {% endfor %}
@@ -20,9 +40,9 @@
             {% endwith %}
             <h3>Current Weather Information {% if weather %}: <font color="red">{{weather.zipcode}} {% endif %}</font></h3>
             
-            <form class="form" action="{{ url_for('show_dashboard') }}" method="post">
-                <input id="location" type="text" name="location" placeholder="Enter Zip" class="input-xlarge" style="height: 25px">
-                <input type="submit" value="Submit" class="btn btn-mini btn-info">
+            <form class="form-inline" action="{{ url_for('show_dashboard') }}" method="post">
+                <input id="location" type="text" name="location" placeholder="Enter Zip" class="input-large" style="height: 30px">
+                <input type="submit" value="Submit" class="btn btn-info">
             </form> 
 
             {% if weather %}
@@ -31,14 +51,17 @@
                 <li><b>Temperature (F): </b>{{weather.temp}}</li>
                 <li><b>Humidity: </b>{{weather.humidity}}</li>
                 <li><b>Precipitation (in.): </b>{{weather.precipitation}}</li>
+                <hr>
             </ul>
             {% endif %}
+            <hr>
 
+            <h3>You currently have {{ sprinklers|length }} sprinkler(s) <a href="#addSprinklerModal" role="button" class="btn btn-info" data-toggle="modal">Add new sprinkler</a><a href="{{ url_for('delete_all_sprinklers')}}" class="btn btn-danger">Delete all</a></h3>
             {% for sprinkler in sprinklers %}
             {% if sprinkler.status == "ON" %}
-            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-success">ON</span></p>
+            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-success">ON</span>  <a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
             {% else %}
-            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-important">OFF</span></p>
+            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-important">OFF</span>  <a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
             {% endif %}
             <ul class="unstyled">
                 <li>
@@ -54,11 +77,12 @@
                 </div>
                 <li>
                 {% if sprinkler.status == "ON" %}
-                <a class="btn btn-danger" href="{{ url_for('do_request', request="OFF", head=sprinkler.name) }}">TURN OFF</a>
+                <a class="btn btn-danger" href="{{ url_for('do_request', request="OFF", head=sprinkler.id) }}">TURN OFF</a>
                 {% else %}
-                <a class="btn btn-success" href="{{ url_for('do_request', request="ON", head=sprinkler.name) }}">TURN ON</a>
+                <a class="btn btn-success" href="{{ url_for('do_request', request="ON", head=sprinkler.id) }}">TURN ON</a>
                 {% endif %}
                 </li>
+                <hr>
             </ul>
             {% endfor %}
             <div id="footer">

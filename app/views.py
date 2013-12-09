@@ -1,9 +1,14 @@
+import json
+import time
+import urllib2
+
 from app import app
+from app import db
+from models import Sprinkler 
 from flask import flash
 from flask import render_template
 from flask import redirect
 from flask import url_for
-import urllib2, json
 from flask import request
 
 def show_weather(location):
@@ -33,30 +38,60 @@ def show_weather(location):
 
 @app.route('/', methods=['GET', 'POST'])
 def show_dashboard():
-    sprinklers = []
-    sprinkler1 = {
-        'name': 'Rear Lawn',
-        'status': 'ON',
-        'moisture': '80',
-        'flow': '100'
-    }
-    sprinkler2= {
-        'name': 'By Deck',
-        'status': 'OFF',
-        'moisture': '33',
-        'flow': '50'
-    }
-    sprinklers.append(sprinkler1)
-    sprinklers.append(sprinkler2)
+    updated_at = time.strftime("%c")
+    sprinklers_list = []
+
+    sprinklers = Sprinkler.query.all()
+    for sprinkler in sprinklers:
+        sprinklers_list.append(sprinkler)
 
     weather = False
 
     if request.method == "POST":
         weather = show_weather(request.form['location'])
 
-    return render_template('dashboard.html', sprinklers=sprinklers, weather=weather)
+    return render_template('dashboard.html', sprinklers=sprinklers_list,
+                                             weather=weather,
+                                             updated_at=updated_at)
+
+@app.route('/add', methods=['POST'])
+def add_sprinkler():
+    if request.method == "POST":
+        name = request.form['name']
+        status = request.form['status']
+        sprinkler = Sprinkler(name=name, status=status, flow='0', moisture='0')
+        db.session.add(sprinkler)
+        db.session.commit()
+        flash("Sprinkler %s was created and set to %s" % (name, status))
+        return redirect(url_for('show_dashboard'))
+
+@app.route('/delete/<head>')
+def delete_sprinkler(head):
+    sprinkler = Sprinkler.query.get(head)
+    db.session.delete(sprinkler)
+    db.session.commit()
+    flash("Sprinkler %s was deleted" % sprinkler.name)
+    return redirect(url_for('show_dashboard'))
+
+@app.route('/deleteAll')
+def delete_all_sprinklers():
+    sprinklers = Sprinkler.query.all()
+    for sprinkler in sprinklers:
+        db.session.delete(sprinkler)
+
+    db.session.commit()
+    flash("All sprinklers deleted")
+    return redirect(url_for('show_dashboard'))
+
 
 @app.route('/request/<head>/<request>')
 def do_request(head, request):
-    flash("Sprinkler %s received request to %s" % (head, request))
+    s = Sprinkler.query.get(head)
+    if request.lower() == "on":
+        s.turn_on()
+    elif request.lower() == "off":
+        s.turn_off()
+    elif request.status() == "status":
+        s.get_status()
+    flash("Sprinkler %s received request to %s" % (s.name, request))
     return redirect(url_for('show_dashboard'))
