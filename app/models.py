@@ -2,8 +2,8 @@ from app import db
 
 class Sprinkler(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text(25))
-    status = db.Column(db.Text(25))
+    name = db.Column(db.String(25))
+    status = db.Column(db.String(25))
     flow = db.Column(db.Integer)
     moisture = db.Column(db.Integer)
 
