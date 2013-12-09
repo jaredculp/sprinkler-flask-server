@@ -1,32 +1,55 @@
 <html>
     <head>
-        <title>Dashboard</title>
+        <title>Your Sprinkler Dashboard</title>
+        <link href="/static/css/flatstrap.css" rel="stylesheet" media="screen">
+        <link href="/static/css/sticky-footer.css" rel="stylesheet">
+        <script src="/static/js/bootstrap.js"></script>
+        <script src="https://code.jquery.com/jquery.js"></script>
     </head>
     <body>
-        <h1>Dashboard</h1>
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <ul>
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {% endwith %}
-        {% for sprinkler in sprinklers %}
-        <h2>Sprinkler # {{ sprinkler.name }}</h2>
-        <ul>
-            <li>
-            Status: {{ sprinkler.status }}
-            {% if sprinkler.status == "ON" %}
-            <a href="{{ url_for('do_request', request="OFF", head=sprinkler.name) }}">TURN OFF</a>
-            {% else %}
-            <a href="{{ url_for('do_request', request="ON", head=sprinkler.name) }}">TURN ON</a>
+        <div class="container">
+            <h1>Your Sprinkler Dashboard</h1>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert">
+                    <strong>{{ message }}</strong>
+                </div>
+                {% endfor %}
             {% endif %}
-            </li>
-            <li>Moisture: {{ sprinkler.moisture }}</li>
-            <li>Flow: {{ sprinkler.flow }}</li>
-        </ul>
-        {% endfor %}
+            {% endwith %}
+            {% for sprinkler in sprinklers %}
+            {% if sprinkler.status == "ON" %}
+            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-success">ON</span></p>
+            {% else %}
+            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-important">OFF</span></p>
+            {% endif %}
+            <ul class="unstyled">
+                <li>
+                <label for="moisture">Moisture reading</label>
+                <div class="progress progress-striped active">
+                    <div class="bar" style="width: {{ sprinkler.moisture }}%;"></div>
+                </div>
+                </li>
+                <li>
+                <label for="flow">Flow reading</label>
+                <div class="progress progress-striped active">
+                    <div class="bar" style="width: {{ sprinkler.flow }}%;"></div>
+                </div>
+                <li>
+                {% if sprinkler.status == "ON" %}
+                <a class="btn btn-danger" href="{{ url_for('do_request', request="OFF", head=sprinkler.name) }}">TURN OFF</a>
+                {% else %}
+                <a class="btn btn-success" href="{{ url_for('do_request', request="ON", head=sprinkler.name) }}">TURN ON</a>
+                {% endif %}
+                </li>
+            </ul>
+            {% endfor %}
+            <div id="footer">
+                <div class="container">
+                    <p class="text-muted">A capstone project by <a href="http://github.com/alexhutcheson">Alex Hutcheson</a>, <a href="http://github.com/walshycakes">Bryan Walsh</a>, & <a href="http://github.com/jaredculp">Jared Culp</a>.</p>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

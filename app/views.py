@@ -8,16 +8,16 @@ from flask import url_for
 def show_dashboard():
     sprinklers = []
     sprinkler1 = {
-        'name': 'name',
+        'name': 'Rear Lawn',
         'status': 'ON',
-        'moisture': '#',
-        'flow': '#'
+        'moisture': '80',
+        'flow': '100'
     }
     sprinkler2= {
-        'name': 'name',
+        'name': 'By Deck',
         'status': 'OFF',
-        'moisture': '#',
-        'flow': '#'
+        'moisture': '33',
+        'flow': '50'
     }
     sprinklers.append(sprinkler1)
     sprinklers.append(sprinkler2)
