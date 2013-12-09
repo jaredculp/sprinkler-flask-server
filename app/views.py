@@ -83,6 +83,21 @@ def delete_all_sprinklers():
     flash("All sprinklers deleted")
     return redirect(url_for('show_dashboard'))
 
+@app.route('/allON')
+def allON():
+    sprinklers = Sprinkler.query.all()
+    for sprinkler in sprinklers:
+        sprinkler.turn_on()
+    flash("All sprinklers have been switched to ON")
+    return redirect(url_for('show_dashboard'))
+
+@app.route('/allOFF')
+def allOFF():
+    sprinklers = Sprinkler.query.all()
+    for sprinkler in sprinklers:
+        sprinkler.turn_off()
+    flash("All sprinklers have been switched to OFF")
+    return redirect(url_for('show_dashboard'))
 
 @app.route('/request/<head>/<request>')
 def do_request(head, request):

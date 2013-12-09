@@ -42,7 +42,7 @@
             
             <form class="form-inline" action="{{ url_for('show_dashboard') }}" method="post">
                 <input id="location" type="text" name="location" placeholder="Enter Zip" class="input-large" style="height: 30px">
-                <input type="submit" value="Submit" class="btn btn-info">
+                <input type="submit" value="Submit" class="btn btn-success">
             </form> 
 
             {% if weather %}
@@ -55,14 +55,20 @@
             </ul>
             {% endif %}
             <hr>
-
-            <h3>You currently have {{ sprinklers|length }} sprinkler(s) <a href="#addSprinklerModal" role="button" class="btn btn-info" data-toggle="modal">Add new sprinkler</a><a href="{{ url_for('delete_all_sprinklers')}}" class="btn btn-danger">Delete all</a></h3>
+          
+            <h3>You currently have {{ sprinklers|length }} sprinkler(s)</h3>
+            <a href="#addSprinklerModal" role="button" class="btn btn-info" data-toggle="modal">Add new sprinkler</a>
+            <a href="{{ url_for('delete_all_sprinklers')}}" class="btn btn-warning">Delete all</a>
+            <a class="btn btn-success" href="{{ url_for('allON') }}">Turn all ON</a>
+            <a class="btn btn-danger" href="{{ url_for('allOFF') }}">Turn all OFF</a>
+            <hr>
             {% for sprinkler in sprinklers %}
             {% if sprinkler.status == "ON" %}
-            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-success">ON</span>  <a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
+                {% set status_color = "text-success" %}
             {% else %}
-            <p><strong>Sprinkler {{ sprinkler.name }}</strong> <span class="label label-important">OFF</span>  <a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
+                {% set status_color = "text-error" %}
             {% endif %}
+            <p><span class="{{ status_color }}"><strong>{{ sprinkler.status }}</strong></span>&nbsp;&nbsp;&nbsp;&nbsp;{{ sprinkler.name }}&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
             <ul class="unstyled">
                 <li>
                 <label for="moisture">Moisture reading</label>
