@@ -27,13 +27,17 @@ def communicate(address, action):
 
     ##waiting assumably
 
-    m1 = ser.read()
+    m1 = ser.read(1) #timeout=None, read(1) means BLOCK until 1 byte recv'd
+    m2 = ser.read(1) #for each message
+    m3 = ser.read(1) #wait for all 3, each 1 byte
 
 
-    log.warning("MESSAGE 1 RECEIVED!!!!!!!!!!!!!!!!")
+    log.warning("All 3 Responses have been received")
     log.warning(m1)
+    log.warning(m2)
+    log.warning(m3)
 
-    incoming = IncomingMessage(m1, False, False)
+    incoming = IncomingMessage(m1, m2, m3)
     incoming.from_binary()
     ser.close()
     return incoming
