@@ -57,7 +57,7 @@
           
             <h3>You currently have {{ sprinklers|length }} sprinkler(s)</h3>
             <a href="#addSprinklerModal" role="button" class="btn btn-info" data-toggle="modal">Add new sprinkler</a>
-            <a href="{{ url_for('delete_all_sprinklers')}}" class="btn btn-warning">Delete all</a>
+            <a href="{{ url_for('delete_all_sprinklers')}}" class="btn btn-warning" onclick="return confirm('Are you sure you want to forget ALL sprinklers?');">Delete all</a>
             <a class="btn btn-success" href="{{ url_for('allON') }}">Turn all ON</a>
             <a class="btn btn-danger" href="{{ url_for('allOFF') }}">Turn all OFF</a>
             <hr>
@@ -67,7 +67,7 @@
             {% else %}
                 {% set status_color = "text-error" %}
             {% endif %}
-            <p><span class="{{ status_color }}"><strong>{{ sprinkler.status }}</strong></span>&nbsp;&nbsp;&nbsp;&nbsp;{{ sprinkler.name }}&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}"><span class="label label-warning">DELETE</span></a></p>
+            <p><span class="{{ status_color }}"><strong>{{ sprinkler.status }}</strong></span>&nbsp;&nbsp;&nbsp;&nbsp;{{ sprinkler.name }}&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('delete_sprinkler', head=sprinkler.id) }}" onclick="return confirm('Are you sure you want to forget {{ sprinkler.name }}?');"><span class="label label-warning">DELETE</span></a></p>
             <ul class="unstyled">
                 <li>
                 <label for="moisture">Moisture reading</label>
