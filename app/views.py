@@ -5,7 +5,9 @@ import urllib2
 from app import app
 from app import db
 from models import Sprinkler 
+from models import SprinklerPowerError
 from flask import flash
+from flask import session 
 from flask import render_template
 from flask import redirect
 from flask import url_for
@@ -45,10 +47,11 @@ def show_dashboard():
     for sprinkler in sprinklers:
         sprinklers_list.append(sprinkler)
 
-    weather = False
+    weather = session.get('weather', False)
 
     if request.method == "POST":
         weather = show_weather(request.form['location'])
+        session['weather'] = weather
 
     return render_template('dashboard.html', sprinklers=sprinklers_list,
                                              weather=weather,
@@ -102,11 +105,18 @@ def allOFF():
 @app.route('/request/<head>/<request>')
 def do_request(head, request):
     s = Sprinkler.query.get(head)
+    error = ""
     if request.lower() == "on":
-        s.turn_on()
+        try:
+            s.turn_on()
+        except SprinklerPowerError as e:
+            error = e.msg
     elif request.lower() == "off":
-        s.turn_off()
-    elif request.status() == "status":
+        try:
+            s.turn_off()
+        except SprinklerPowerError as e:
+            error = e.msg
+    elif request.lower() == "status":
         s.get_status()
-    flash("Sprinkler %s received request to %s" % (s.name, request))
+    flash("Sprinkler %s received request to %s. %s" % (s.name, request, error))
     return redirect(url_for('show_dashboard'))
