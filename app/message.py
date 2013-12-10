@@ -1,9 +1,13 @@
+import Adafruit_BBIO.UART as UART
 import serial
+import logging
+log = logging.getLogger('werkzeug')
+
+UART.setup("UART1")
 
 def serial_init():
-    ser = serial.Serial(timeout=1)
-    ser.baudrate = 9600
-    ser.port = 0
+    ser = serial.Serial(port="/dev/ttyO1", baudrate=9600, timeout=None)
+    log.warning(ser.isOpen())
     return ser
 
 def communicate(address, action):
@@ -23,15 +27,15 @@ def communicate(address, action):
 
     ##waiting assumably
 
-    #m1 = ser.read()
-    #m2 = ser.read()
-    #m3 = ser.read()
+    m1 = ser.read()
 
-    m1 = bin(6)
-    m2 = bin(64)
-    m3 = bin(75)
-    incoming = IncomingMessage(m1, m2, m3)
+
+    log.warning("MESSAGE 1 RECEIVED!!!!!!!!!!!!!!!!")
+    log.warning(m1)
+
+    incoming = IncomingMessage(m1, False, False)
     incoming.from_binary()
+    ser.close()
     return incoming
 
 class OutgoingMessage():
@@ -47,12 +51,12 @@ class OutgoingMessage():
                 self.master, self.address, self.opcode, self.raw)
 
     def to_binary(self):
-        self.raw = bin(self.master << 7) + bin(self.address << 2) + bin(self.opcode)
+        self.raw = bin((self.master << 7) | (self.address << 2) | (self.opcode))
+	log.warning(self.raw)
 
     def send_message(self, ser):
-        #ser.isOpen()
         self.to_binary()
-        #ser.write(self.raw)
+        ser.write(self.raw)
 
 class IncomingMessage():
 
