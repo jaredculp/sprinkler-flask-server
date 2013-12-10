@@ -4,15 +4,12 @@ import logging
 log = logging.getLogger('werkzeug')
 
 UART.setup("UART1")
+UART.setup("UART2")
+UART.setup("UART4")
+UART.setup("UART5")
 
-def serial_init():
-    ser = serial.Serial(port="/dev/ttyO1", baudrate=9600, timeout=None)
-    log.warning(ser.isOpen())
-    return ser
-
-def communicate(address, action):
-    ser = serial_init()
-
+def communicate(sprinkler, action):
+    ser = serial.Serial(port=sprinkler.uart, baudrate=9600, timeout=None)
     if action.lower() == "on":
         opcode = 0
     elif action.lower() == "off":
@@ -22,23 +19,22 @@ def communicate(address, action):
     else:
         opcode = 3
 
-    out = OutgoingMessage(1, address, opcode)
+    out = OutgoingMessage(1, sprinkler.id, opcode)
     out.send_message(ser) #sent message, wait for ACK
 
     ##waiting assumably
 
-    m1 = ser.read(1) #timeout=None, read(1) means BLOCK until 1 byte recv'd
-    m2 = ser.read(1) #for each message
-    m3 = ser.read(1) #wait for all 3, each 1 byte
+    m1 = ser.readline() #timeout=None, read(1) means BLOCK until 1 byte recv'd
+    m2 = ser.readline() #for each message
+    m3 = ser.readline() #wait for all 3, each 1 byte
 
-
-    log.warning("All 3 Responses have been received")
-    log.warning(m1)
-    log.warning(m2)
-    log.warning(m3)
+    log.warning("m1: %r" % m1)
+    log.warning("m2: %r" % m2)
+    log.warning("m3: %r" % m3)
 
     incoming = IncomingMessage(m1, m2, m3)
     incoming.from_binary()
+    log.warning(incoming)
     ser.close()
     return incoming
 
@@ -60,7 +56,7 @@ class OutgoingMessage():
 
     def send_message(self, ser):
         self.to_binary()
-        ser.write(self.raw)
+        num = ser.write(self.raw)
 
 class IncomingMessage():
 
@@ -84,13 +80,14 @@ class IncomingMessage():
                 self.master1, self.address, self.status, self.error, self.flow, self.moisture)
 
     def from_binary(self):
-        self.master1 = int(self.raw1, 2) & 0x80
-        self.address = int(self.raw1, 2) & 0x7c
-        self.status = int(self.raw1, 2) & 0x2
-        self.error = int(self.raw1, 2) & 0x1
+	log.warning(type(self.raw1))
+        self.master1 = int(self.raw1, 16) >> 7 
+        self.address = (int(self.raw1, 16) >> 2) & 0x1F
+        self.status = (int(self.raw1, 16) >> 1) & 0x1
+        self.error = int(self.raw1, 16) & 0x1
 
-        self.master2 = int(self.raw2, 2) & 0x80
-        self.flow = int(self.raw2, 2) & 0x7f
+        self.master2 = int(self.raw2, 16) >> 7 
+        self.flow = int(self.raw2, 16) & 0x7f
 
-        self.master3 = int(self.raw3, 2) & 0x80
-        self.moisture = int(self.raw3, 2) & 0x7f
+        self.master3 = int(self.raw3, 16) >> 7
+        self.moisture = int(self.raw3, 16) & 0x7f

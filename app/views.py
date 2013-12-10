@@ -62,7 +62,8 @@ def add_sprinkler():
     if request.method == "POST":
         name = request.form['name']
         status = request.form['status']
-        sprinkler = Sprinkler(name=name, status=status, flow='0', moisture='0')
+        uart = request.form['uart']
+        sprinkler = Sprinkler(name=name, status=status, flow='0', moisture='0', uart=uart)
         db.session.add(sprinkler)
         db.session.commit()
         flash("Sprinkler %s was created and set to %s" % (name, status))
