@@ -1,12 +1,30 @@
 import Adafruit_BBIO.UART as UART
 import serial
 import logging
+import random
 log = logging.getLogger('werkzeug')
 
 UART.setup("UART1")
 UART.setup("UART2")
 UART.setup("UART4")
 UART.setup("UART5")
+
+def generate_raw_input(sprinkler, opcode):
+    on_off = False 
+    if opcode == 0: # turn on
+        on_off = 1	
+    elif opcode == 1: # turn off
+	on_off = 0
+    elif opcode == 2: # maintain
+	if sprinkler.status.lower() == "on":
+	    on_off = 1
+	else:
+            on_off = 0
+    m1 = chr((0 << 7) | (sprinkler.id << 2) | (on_off << 1) | 0)
+    m2 = chr((0 << 7) | (random.randint(0, 128)))
+    m3 = chr((0 << 7) | (random.randint(0, 128)))
+    generated = {'m1': m1, 'm2': m2, 'm3': m3}
+    return generated
 
 def communicate(sprinkler, action):
     ser = serial.Serial(port=sprinkler.uart, baudrate=9600, timeout=None)
@@ -22,17 +40,10 @@ def communicate(sprinkler, action):
     out = OutgoingMessage(1, sprinkler.id, opcode)
     out.send_message(ser) #sent message, wait for ACK
 
-    ##waiting assumably
-
-    m1 = ser.read(1) #timeout=None, read(1) means BLOCK until 1 byte recv'd
-    m1 = ord(m1)
-    log.warning("m1: %d" % m1)
-    m2 = ser.read(1)
-    m2 = ord(m2)
-    log.warning("m2: %d" % m2)
-    m3 = ser.read(1)
-    m3 = ord(m3)
-    log.warning("m3: %d" % m3)
+    input = generate_raw_input(sprinkler, opcode)
+    m1 = input.get('m1')
+    m2 = input.get('m2')
+    m3 = input.get('m3')
 
     incoming = IncomingMessage(m1, m2, m3)
     incoming.from_binary()
@@ -54,10 +65,11 @@ class OutgoingMessage():
 
     def to_binary(self):
 	self.raw = chr((self.master << 7) | (self.address << 2) | (self.opcode))
-	log.warning(self.raw)
 
     def send_message(self, ser):
         self.to_binary()
+	ser.flush()
+	log.warning("SENDING: %r" % self.raw)
         num = ser.write(self.raw)
 
 class IncomingMessage():
@@ -82,14 +94,13 @@ class IncomingMessage():
                 self.master1, self.address, self.status, self.error, self.flow, self.moisture)
 
     def from_binary(self):
-	log.warning(type(self.raw1))
-        self.master1 = self.raw1 >> 7 
-        self.address = (self.raw1 >> 2) & 0x1F
-        self.status = (self.raw1 >> 1) & 0x1
-        self.error = self.raw1 & 0x1
+        self.master1 = ord(self.raw1) >> 7 
+        self.address = (ord(self.raw1) >> 2) & 0x1F
+        self.status = (ord(self.raw1) >> 1) & 0x1
+        self.error = ord(self.raw1) & 0x1
 
-        self.master2 = self.raw2 >> 7 
-        self.flow = self.raw2 & 0x7f
+        self.master2 = ord(self.raw2) >> 7 
+        self.flow = ord(self.raw2) & 0x7f
 
-        self.master3 = self.raw3 >> 7
-        self.moisture = self.raw3 & 0x7f
+        self.master3 = ord(self.raw3) >> 7
+        self.moisture = ord(self.raw3) & 0x7f
