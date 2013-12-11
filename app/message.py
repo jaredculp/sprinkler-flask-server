@@ -1,15 +1,15 @@
-import Adafruit_BBIO.UART as UART
+#import Adafruit_BBIO.UART as UART
 import serial
 import logging
 import random
 log = logging.getLogger('werkzeug')
 
-UART.setup("UART1")
-UART.setup("UART2")
-UART.setup("UART4")
-UART.setup("UART5")
+#UART.setup("UART1")
+#UART.setup("UART2")
+#UART.setup("UART4")
+#UART.setup("UART5")
 
-def generate_raw_input(sprinkler, opcode):
+def generate_raw_input(sprinkler, opcode, ser):
     on_off = False 
     if opcode == 0: # turn on
         on_off = 1	
@@ -21,13 +21,21 @@ def generate_raw_input(sprinkler, opcode):
     else:
         on_off = 0
     m1 = chr((0 << 7) | (sprinkler.id << 2) | (on_off << 1) | 0)
+    if ser:
+        ser.flushInput()
+        moisture = ser.read(1)
+        m3 = chr((0 << 7) | (moisture))
+    else:
+        m3 = chr((0 << 7) | (random.randint(0, 128)))
     m2 = chr((0 << 7) | (random.randint(0, 128)))
-    m3 = chr((0 << 7) | (random.randint(0, 128)))
     generated = {'m1': m1, 'm2': m2, 'm3': m3}
     return generated
 
 def communicate(sprinkler, action):
-    ser = serial.Serial(port=sprinkler.uart, baudrate=9600, timeout=None)
+    try:
+        ser = serial.Serial(port=sprinkler.uart, baudrate=9600, timeout=None)
+    except:
+        ser = False
     if action.lower() == "on":
         opcode = 0
     elif action.lower() == "off":
@@ -38,9 +46,10 @@ def communicate(sprinkler, action):
         opcode = 3
 
     out = OutgoingMessage(1, sprinkler.id, opcode)
+    log.warning(out)
     out.send_message(ser) #sent message, wait for ACK
 
-    input = generate_raw_input(sprinkler, opcode)
+    input = generate_raw_input(sprinkler, opcode, ser)
     m1 = input.get('m1')
     m2 = input.get('m2')
     m3 = input.get('m3')
@@ -48,7 +57,8 @@ def communicate(sprinkler, action):
     incoming = IncomingMessage(m1, m2, m3)
     incoming.from_binary()
     log.warning(incoming)
-    ser.close()
+    if ser:
+        ser.close()
     return incoming
 
 class OutgoingMessage():
@@ -68,9 +78,10 @@ class OutgoingMessage():
 
     def send_message(self, ser):
         self.to_binary()
-        ser.flush()
-        log.warning("SENDING: %r" % self.raw)
-        num = ser.write(self.raw)
+        if ser:
+            ser.flush()
+        if ser:
+            num = ser.write(self.raw)
 
 class IncomingMessage():
 
@@ -90,7 +101,7 @@ class IncomingMessage():
         self.raw3 = raw3
 
     def __repr__(self):
-        return '<IncomingMessage: master=%r, address=%r, status=%r, error=%r>, flow=%r, moisture=%r>' % (
+        return '<IncomingMessage: master=%r, address=%r, status=%r, error=%r, flow=%r, moisture=%r>' % (
                 self.master1, self.address, self.status, self.error, self.flow, self.moisture)
 
     def from_binary(self):
