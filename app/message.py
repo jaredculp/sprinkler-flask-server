@@ -24,13 +24,15 @@ def communicate(sprinkler, action):
 
     ##waiting assumably
 
-    m1 = ser.readline() #timeout=None, read(1) means BLOCK until 1 byte recv'd
-    m2 = ser.readline() #for each message
-    m3 = ser.readline() #wait for all 3, each 1 byte
-
-    log.warning("m1: %r" % m1)
-    log.warning("m2: %r" % m2)
-    log.warning("m3: %r" % m3)
+    m1 = ser.read(1) #timeout=None, read(1) means BLOCK until 1 byte recv'd
+    m1 = ord(m1)
+    log.warning("m1: %d" % m1)
+    m2 = ser.read(1)
+    m2 = ord(m2)
+    log.warning("m2: %d" % m2)
+    m3 = ser.read(1)
+    m3 = ord(m3)
+    log.warning("m3: %d" % m3)
 
     incoming = IncomingMessage(m1, m2, m3)
     incoming.from_binary()
@@ -51,7 +53,7 @@ class OutgoingMessage():
                 self.master, self.address, self.opcode, self.raw)
 
     def to_binary(self):
-        self.raw = bin((self.master << 7) | (self.address << 2) | (self.opcode))
+	self.raw = chr((self.master << 7) | (self.address << 2) | (self.opcode))
 	log.warning(self.raw)
 
     def send_message(self, ser):
@@ -81,13 +83,13 @@ class IncomingMessage():
 
     def from_binary(self):
 	log.warning(type(self.raw1))
-        self.master1 = int(self.raw1, 16) >> 7 
-        self.address = (int(self.raw1, 16) >> 2) & 0x1F
-        self.status = (int(self.raw1, 16) >> 1) & 0x1
-        self.error = int(self.raw1, 16) & 0x1
+        self.master1 = self.raw1 >> 7 
+        self.address = (self.raw1 >> 2) & 0x1F
+        self.status = (self.raw1 >> 1) & 0x1
+        self.error = self.raw1 & 0x1
 
-        self.master2 = int(self.raw2, 16) >> 7 
-        self.flow = int(self.raw2, 16) & 0x7f
+        self.master2 = self.raw2 >> 7 
+        self.flow = self.raw2 & 0x7f
 
-        self.master3 = int(self.raw3, 16) >> 7
-        self.moisture = int(self.raw3, 16) & 0x7f
+        self.master3 = self.raw3 >> 7
+        self.moisture = self.raw3 & 0x7f
