@@ -14,12 +14,12 @@ def generate_raw_input(sprinkler, opcode):
     if opcode == 0: # turn on
         on_off = 1	
     elif opcode == 1: # turn off
-	on_off = 0
+        on_off = 0
     elif opcode == 2: # maintain
-	if sprinkler.status.lower() == "on":
-	    on_off = 1
-	else:
-            on_off = 0
+        if sprinkler.status.lower() == "on":
+            on_off = 1
+    else:
+        on_off = 0
     m1 = chr((0 << 7) | (sprinkler.id << 2) | (on_off << 1) | 0)
     m2 = chr((0 << 7) | (random.randint(0, 128)))
     m3 = chr((0 << 7) | (random.randint(0, 128)))
@@ -64,12 +64,12 @@ class OutgoingMessage():
                 self.master, self.address, self.opcode, self.raw)
 
     def to_binary(self):
-	self.raw = chr((self.master << 7) | (self.address << 2) | (self.opcode))
+        self.raw = chr((self.master << 7) | (self.address << 2) | (self.opcode))
 
     def send_message(self, ser):
         self.to_binary()
-	ser.flush()
-	log.warning("SENDING: %r" % self.raw)
+        ser.flush()
+        log.warning("SENDING: %r" % self.raw)
         num = ser.write(self.raw)
 
 class IncomingMessage():

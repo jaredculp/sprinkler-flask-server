@@ -30,7 +30,6 @@ class Sprinkler(db.Model):
         return '<Sprinkler#%r %r, Status=%r>' % (self.id, self.name, self.status)
 
     def process_request(self, response):
-        log.warning(response)
         if response.status: # status = 1
             self.status = "ON"
         else:
@@ -42,6 +41,7 @@ class Sprinkler(db.Model):
             self.moisture = response.moisture
 
     def turn_on(self):
+        log.warning("Turning sprinkler %r ON" % self.name)
         self.process_request(communicate(self, 'ON'))
         if self.status == "OFF":
             raise SprinklerPowerError("Failed to turn sprinkler ON")
@@ -49,6 +49,7 @@ class Sprinkler(db.Model):
             db.session.commit()
 
     def turn_off(self):
+        log.warning("Turning sprinkler %r OFF" % self.name)
         self.process_request(communicate(self, 'OFF'))
         if self.status == "ON":
             raise SprinklerPowerError("Failed to turn sprinkler OFF")
@@ -56,5 +57,6 @@ class Sprinkler(db.Model):
             db.session.commit()
 
     def get_status(self):
+        log.warning("Requesting status from sprinkler %r" % self.name)
         self.process_request(communicate(self, 'STATUS'))
         db.session.commit()
