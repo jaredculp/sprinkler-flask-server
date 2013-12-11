@@ -1,13 +1,13 @@
-#import Adafruit_BBIO.UART as UART
+import Adafruit_BBIO.UART as UART
 import serial
 import logging
 import random
 log = logging.getLogger('werkzeug')
 
-#UART.setup("UART1")
-#UART.setup("UART2")
-#UART.setup("UART4")
-#UART.setup("UART5")
+UART.setup("UART1")
+UART.setup("UART2")
+UART.setup("UART4")
+UART.setup("UART5")
 
 def generate_raw_input(sprinkler, opcode, ser):
     on_off = False 
@@ -24,7 +24,7 @@ def generate_raw_input(sprinkler, opcode, ser):
     if ser:
         ser.flushInput()
         moisture = ser.read(1)
-        m3 = chr((0 << 7) | (moisture))
+        m3 = chr((0 << 7) | (int(100 - ord(moisture)/2.55)))
     else:
         m3 = chr((0 << 7) | (random.randint(0, 128)))
     m2 = chr((0 << 7) | (random.randint(0, 128)))
@@ -49,14 +49,20 @@ def communicate(sprinkler, action):
     log.warning(out)
     out.send_message(ser) #sent message, wait for ACK
 
-    input = generate_raw_input(sprinkler, opcode, ser)
-    m1 = input.get('m1')
-    m2 = input.get('m2')
-    m3 = input.get('m3')
+    if ser:
+        ser.flushInput()
+        m1 = ser.read(1)
+        m2 = ser.read(1)
+        m3 = ser.read(1)
+    else:
+        input = generate_raw_input(sprinkler, opcode, ser)
+        m1 = input.get('m1')
+        m2 = input.get('m2')
+        m3 = input.get('m3')
 
     incoming = IncomingMessage(m1, m2, m3)
-    incoming.from_binary()
     log.warning(incoming)
+    incoming.from_binary()
     if ser:
         ser.close()
     return incoming
@@ -70,8 +76,7 @@ class OutgoingMessage():
         self.raw = False
 
     def __repr__(self):
-        return '<OutgoingMessage: master=%r, address=%r, opcode=%r, raw=%r>' % (
-                self.master, self.address, self.opcode, self.raw)
+        return '<OutgoingMessage: master=%r, address=%r, opcode=%r, raw=%r>' % (self.master, self.address, self.opcode, self.raw)
 
     def to_binary(self):
         self.raw = chr((self.master << 7) | (self.address << 2) | (self.opcode))
@@ -101,8 +106,7 @@ class IncomingMessage():
         self.raw3 = raw3
 
     def __repr__(self):
-        return '<IncomingMessage: master=%r, address=%r, status=%r, error=%r, flow=%r, moisture=%r>' % (
-                self.master1, self.address, self.status, self.error, self.flow, self.moisture)
+        return '<IncomingMessage: master=%r, address=%r, status=%r, error=%r, flow=%r, moisture=%r>' % (self.master1, self.address, self.status, self.error, self.flow, self.moisture)
 
     def from_binary(self):
         self.master1 = ord(self.raw1) >> 7 
